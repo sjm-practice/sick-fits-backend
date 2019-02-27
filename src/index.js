@@ -12,9 +12,9 @@ server.express.use(cookieParser());
 
 // Use express middleware to populate current user
 server.express.use((req, res, next) => {
-  const {token}  = req.cookies;
+  const { token }  = req.cookies;
   if (token) {
-    const userId = jwt.verify(token, process.env.APP_SECRET);
+    const { userId } = jwt.verify(token, process.env.APP_SECRET);
     // put userId on to the request for future requests to access
     req.userId = userId;
   }
