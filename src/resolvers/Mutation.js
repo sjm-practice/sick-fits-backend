@@ -111,9 +111,8 @@ const Mutations = {
       where: {email},
       data: { resetToken, resetTokenExpiry},
     })
-    console.log("resetRequest response:", res);
 
-    // 3. email them that reset token
+    // TODO 3. email them that reset token
 
     return { message: 'reset token generated' };
   },
