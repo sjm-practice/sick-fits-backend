@@ -8,47 +8,56 @@ const Mutations = {
   async createItem(parent, args, ctx, info) {
     // check if user logged in
     if (!ctx.request.userId) {
-      throw new Error('You must be logged in to create an item to sell!');
+      throw new Error("You must be logged in to create an item to sell!");
     }
-    
-    const item = await ctx.db.mutation.createItem({
-      data: {
-        // Prisma: create a relationship between item and user
-        user: {
-          connect: {
-            id: ctx.request.userId,
+
+    const item = await ctx.db.mutation.createItem(
+      {
+        data: {
+          // Prisma: create a relationship between item and user
+          user: {
+            connect: {
+              id: ctx.request.userId,
+            },
           },
+          ...args,
         },
-        ...args
       },
-    }, info);
+      info,
+    );
 
     return item;
   },
   updateItem(parent, args, ctx, info) {
     // TODO: check if user logged in
-    
+
     // first make a copy of the updates
-    const updates = {...args};
+    const updates = { ...args };
     // then remove id (don't want to update that)
     delete updates.id;
-    
-    return ctx.db.mutation.updateItem({
-      data: updates,
-      where: {
-        id: args.id
-      }
-    }, info);
+
+    return ctx.db.mutation.updateItem(
+      {
+        data: updates,
+        where: {
+          id: args.id,
+        },
+      },
+      info,
+    );
   },
   async deleteItem(parent, args, ctx, info) {
     const where = { id: args.id };
     // 1. find the item to delete
-    const item = await ctx.db.query.item({where}, `{ id
-    title}`);
+    const item = await ctx.db.query.item(
+      { where },
+      `{ id
+    title}`,
+    );
     // 2. check if owner, and has permissions
     // TODO
     // 3. delete it
-    return ctx.db.mutation.deleteItem({where}, info);
+    return ctx.db.mutation.deleteItem({ where }, info);
   },
   async signup(parent, args, ctx, info) {
     // lowercase the email
@@ -61,15 +70,15 @@ const Mutations = {
         data: {
           ...args,
           password,
-          permissions: { set: ['USER']}
-        }
+          permissions: { set: ["USER"] },
+        },
       },
-      info
+      info,
     );
     // create a jwt token for the new user
-    const token = jwt.sign({userId: user.id}, process.env.APP_SECRET);
+    const token = jwt.sign({ userId: user.id }, process.env.APP_SECRET);
     // set the jwt token on the response
-    ctx.response.cookie('token', token, {
+    ctx.response.cookie("token", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
@@ -77,9 +86,9 @@ const Mutations = {
     // return user to browser
     return user;
   },
-  async signin(parent, {email, password}, ctx, info) {
+  async signin(parent, { email, password }, ctx, info) {
     // 1. check if there is a user with that email
-    const user = await ctx.db.query.user({ where: { email }});
+    const user = await ctx.db.query.user({ where: { email } });
     if (!user) {
       throw new Error(`No such user for email ${email}.`);
     }
@@ -91,54 +100,56 @@ const Mutations = {
     }
 
     // 3. generate the JWT token
-    const token = jwt.sign({userId: user.id}, process.env.APP_SECRET);
-    
+    const token = jwt.sign({ userId: user.id }, process.env.APP_SECRET);
+
     // 4. set the cookie with the token
-    ctx.response.cookie('token', token, {
+    ctx.response.cookie("token", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     });
-    
+
     // 5. return the user
     return user;
   },
   signout(parent, args, ctx, info) {
-    ctx.response.clearCookie('token');
+    ctx.response.clearCookie("token");
     return { message: "Goodbye!" };
   },
   async requestReset(parent, { email }, ctx, info) {
     // 1. check if this is a real user
-    const user = await ctx.db.query.user({ where: { email }});
+    const user = await ctx.db.query.user({ where: { email } });
     if (!user) {
       throw new Error(`No such user for email ${email}.`);
     }
 
     // 2. set a reset token and expiry on that user
-    const randomBytesPromise = promisify(randomBytes); 
-    const resetToken = (await randomBytesPromise(20)).toString('hex');
+    const randomBytesPromise = promisify(randomBytes);
+    const resetToken = (await randomBytesPromise(20)).toString("hex");
     const resetTokenExpiry = Date.now() + 3600000; // 1 hr from now
     const res = await ctx.db.mutation.updateUser({
-      where: {email},
-      data: { resetToken, resetTokenExpiry},
+      where: { email },
+      data: { resetToken, resetTokenExpiry },
     });
 
     // 3. email them that reset token
     const mailRes = await transport.sendMail({
-      from: 'dev@sickfits.com',
+      from: "dev@sickfits.com",
       to: user.email,
-      subject: 'Sick Fits! Reset your password.',
+      subject: "Sick Fits! Reset your password.",
       html: emailTemplate(`Your Password Reset Token is here!
       \n\n
-      <a href="${process.env.FRONTEND_URL}/reset?resetToken=${resetToken}">Click here to reset.</a>
+      <a href="${
+        process.env.FRONTEND_URL
+      }/reset?resetToken=${resetToken}">Click here to reset.</a>
       `),
     });
 
-    return { message: 'reset token generated' };
+    return { message: "reset token generated" };
   },
   async resetPassword(parent, { resetToken, password, confirmPassword }, ctx, info) {
     // 1. check passwords match
-    if (password !==  confirmPassword) {
-      throw new Error("Password and Confirm Password do not matchMedia.")
+    if (password !== confirmPassword) {
+      throw new Error("Password and Confirm Password do not matchMedia.");
     }
 
     // 2. check legit token
@@ -147,7 +158,7 @@ const Mutations = {
       where: {
         resetToken,
         resetTokenExpiry_gte: Date.now() - 3600000,
-      }
+      },
     });
     if (!user) {
       throw new Error("Reset Password request is either invalid or expired.");
@@ -163,7 +174,7 @@ const Mutations = {
         password: newPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      }
+      },
     });
 
     // 6. generate JWT
@@ -172,12 +183,12 @@ const Mutations = {
     // 7. set JWT cookie
     ctx.response.cookie("token", token, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 365  // 1 yr
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 yr
     });
 
     // 8. return the new user
     return updatedUser;
-  }
+  },
 };
 
 module.exports = Mutations;

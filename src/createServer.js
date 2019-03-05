@@ -3,7 +3,7 @@ const Mutation = require("./resolvers/Mutation");
 const Query = require("./resolvers/Query");
 const db = require("./db");
 
-// Create the  GraphQL Server 
+// Create the  GraphQL Server
 
 function createServer() {
   return new GraphQLServer({
@@ -16,7 +16,7 @@ function createServer() {
       requireResolversForResolveType: false,
     },
     context: req => ({ ...req, db }),
-  })
+  });
 }
 
 module.exports = createServer;

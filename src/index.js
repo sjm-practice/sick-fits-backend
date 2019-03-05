@@ -1,5 +1,5 @@
-const cookieParser = require('cookie-parser');
-const jwt = require('jsonwebtoken');
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config({ path: "variables.env" });
 const createServer = require("./createServer");
@@ -12,7 +12,7 @@ server.express.use(cookieParser());
 
 // Use express middleware to populate current userId
 server.express.use((req, res, next) => {
-  const { token }  = req.cookies;
+  const { token } = req.cookies;
   if (token) {
     const { userId } = jwt.verify(token, process.env.APP_SECRET);
     // put userId on to the request for future requests to access
@@ -28,14 +28,14 @@ server.express.use(async (req, res, next) => {
 
   // get the user from db
   const user = await db.query.user(
-    { where: { id: req.userId }},
-    `{ id, permissions, name, email }`
+    { where: { id: req.userId } },
+    `{ id, permissions, name, email }`,
   );
 
   // add user to request
   req.user = user;
 
-  next();
+  return next();
 });
 
 server.start(
@@ -45,5 +45,5 @@ server.start(
       origin: process.env.FRONTEND_URL,
     },
   },
-  deets => console.log(`Server is now running at http://localhost:${deets.port}`)
+  deets => console.log(`Server is now running at http://localhost:${deets.port}`),
 );
