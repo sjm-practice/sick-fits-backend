@@ -3,27 +3,36 @@
 # are not defined here (and are defined in the specified file)
 # import * from './generated/prisma.graphql'
 
+type SuccessMessage {
+  message: String
+}
+
 type Mutation {
-  createItem(
-    title: String,
-    description: String,
-    price: Int,
-    image: String,
-    largeImage: String,
-  ): Item!
-  updateItem(
-    id: ID!,
-    title: String,
-    description: String,
-    price: Int,
-  ): Item!
-  deleteItem(
-    id: ID!
-  ): Item
+  createItem(title: String, description: String, price: Int, image: String, largeImage: String): Item!
+  updateItem(id: ID!, title: String, description: String, price: Int): Item!
+  deleteItem(id: ID!): Item
+  signup(email: String!, password: String!, name: String!): User!
+  signin(email: String!, password: String!): User!
+  signout: SuccessMessage
+  requestReset(email: String!): SuccessMessage
+  resetPassword(resetToken: String!, password: String!, confirmPassword: String!): User!
+  updatePermissions(permissions: [Permission], userId: ID!): User
 }
 
 type Query {
   items(where: ItemWhereInput, orderBy: ItemOrderByInput, skip: Int, first: Int): [Item]!
   item(where: ItemWhereUniqueInput!): Item
   itemsConnection(where: ItemWhereInput): ItemConnection!
+  me: User
+  users: [User]!
+}
+
+# note this User type was created so a user on the client side would not contain
+# password and reset token fields. I assume this is used instead of importing the
+# other User type from prisma.graphql (Wes explained it briefly in the video)
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  permissions: [Permission!]!
 }
