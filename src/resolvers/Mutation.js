@@ -226,6 +226,72 @@ const Mutations = {
       info,
     );
   },
+  async addToCart(parent, args, ctx, info) {
+    // 1. Make sure user logged in
+    const { userId } = ctx.request;
+    if (!userId) {
+      throw new Error("You must be signed in to add items to the cart.");
+    }
+
+    // 2. Query user's current cart
+    const [existingCartItem] = await ctx.db.query.cartItems({
+      where: {
+        user: { id: userId },
+        item: { id: args.id },
+      },
+    });
+
+    // 3. if item in cart, increment by 1
+    if (existingCartItem) {
+      return ctx.db.mutation.updateCartItem(
+        {
+          where: { id: existingCartItem.id },
+          data: { quantity: existingCartItem.quantity + 1 },
+        },
+        info,
+      );
+    }
+
+    // 4. if item not in cart, create CartItem
+    return ctx.db.mutation.createCartItem(
+      {
+        data: {
+          user: {
+            connect: { id: userId },
+          },
+          item: {
+            connect: { id: args.id },
+          },
+        },
+      },
+      info,
+    );
+  },
+  async removeFromCart(parent, args, ctx, info) {
+    // 1. find cart item
+    const cartItem = await ctx.db.query.cartItem(
+      {
+        where: {
+          id: args.id,
+        },
+      },
+      `{ id, user { id }}`,
+    );
+    if (!cartItem) throw new Error("No cart item found.");
+
+    // 2. make sure they own cart item
+    if (cartItem.user.id !== ctx.request.userId) {
+      throw new Error("You must be the owner of the item to delete from cart.");
+    }
+
+    // 3. delete cart item
+    return ctx.db.mutation.deleteCartItem(
+      {
+        where: { id: args.id },
+      },
+      info,
+    );
+  },
 };
 
 module.exports = Mutations;
