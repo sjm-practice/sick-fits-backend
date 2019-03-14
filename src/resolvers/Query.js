@@ -49,12 +49,35 @@ const Query = {
     // 3. check if have permissions to see this order
     const isOwner = order.user.id === ctx.request.userId;
     const isAdmin = ctx.request.user.permissions.includes("ADMIN");
-    if (!isOwner || !isAdmin) {
+
+    if (!isOwner && !isAdmin) {
       throw new Error("Not allowed to view order.");
     }
 
     // 4. return the order
     return order;
+  },
+  async orders(parent, args, ctx, info) {
+    // 1. check if logged in
+    const {
+      request: { userId },
+    } = ctx;
+    if (!userId) {
+      throw new Error("You must be logged in to view your orders!");
+    }
+
+    // 2. query orders for current user
+    const orders = await ctx.db.query.orders(
+      {
+        where: {
+          user: { id: userId },
+        },
+      },
+      info,
+    );
+
+    // 3. return the order
+    return orders;
   },
 };
 
