@@ -66,8 +66,8 @@ const Query = {
       throw new Error("You must be logged in to view your orders!");
     }
 
-    // 2. query orders for current user
-    const orders = await ctx.db.query.orders(
+    // 2. query and return orders for current user
+    return ctx.db.query.orders(
       {
         where: {
           user: { id: userId },
@@ -75,9 +75,6 @@ const Query = {
       },
       info,
     );
-
-    // 3. return the order
-    return orders;
   },
 };
 

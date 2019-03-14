@@ -29,7 +29,7 @@ type Query {
   me: User
   users: [User]!
   order(id: ID!): Order
-  orders(where: OrderWhereInput): [Order]!
+  orders(orderBy: OrderOrderByInput): [Order]!
 }
 
 # note this User type was created so a user on the client side would not contain
