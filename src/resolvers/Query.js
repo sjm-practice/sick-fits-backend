@@ -32,6 +32,50 @@ const Query = {
     // 3. query all users
     return ctx.db.query.users({}, info);
   },
+  async order(parent, args, ctx, info) {
+    // 1. check if logged in
+    if (!ctx.request.userId) {
+      throw new Error("You must be logged in!");
+    }
+
+    // 2. query the order
+    const order = await ctx.db.query.order(
+      {
+        where: { id: args.id },
+      },
+      info,
+    );
+
+    // 3. check if have permissions to see this order
+    const isOwner = order.user.id === ctx.request.userId;
+    const isAdmin = ctx.request.user.permissions.includes("ADMIN");
+
+    if (!isOwner && !isAdmin) {
+      throw new Error("Not allowed to view order.");
+    }
+
+    // 4. return the order
+    return order;
+  },
+  async orders(parent, args, ctx, info) {
+    // 1. check if logged in
+    const {
+      request: { userId },
+    } = ctx;
+    if (!userId) {
+      throw new Error("You must be logged in to view your orders!");
+    }
+
+    // 2. query and return orders for current user
+    return ctx.db.query.orders(
+      {
+        where: {
+          user: { id: userId },
+        },
+      },
+      info,
+    );
+  },
 };
 
 module.exports = Query;

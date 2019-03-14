@@ -19,6 +19,7 @@ type Mutation {
   updatePermissions(permissions: [Permission], userId: ID!): User
   addToCart(id: ID!): CartItem
   removeFromCart(id: ID!): CartItem
+  createOrder(token: String!): Order!
 }
 
 type Query {
@@ -27,6 +28,8 @@ type Query {
   itemsConnection(where: ItemWhereInput): ItemConnection!
   me: User
   users: [User]!
+  order(id: ID!): Order
+  orders(orderBy: OrderOrderByInput): [Order]!
 }
 
 # note this User type was created so a user on the client side would not contain
