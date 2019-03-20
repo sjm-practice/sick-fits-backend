@@ -8,7 +8,8 @@
     "lint": "eslint . --ext .js,.jsx",
     "test": "jest",
     "playground": "graphql playground --dotenv variables.env",
-    "deploy": "prisma deploy --env-file variables.env",
+    "deploy:dev": "prisma deploy --env-file variables.env",
+    "deploy:heroku": "prisma deploy --env-file prisma.heroku.env",
     "dev": "npm-run-all --parallel debug playground"
   },
   "dependencies": {
